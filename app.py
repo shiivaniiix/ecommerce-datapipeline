@@ -7,9 +7,10 @@ import boto3
 import os
 from dotenv import load_dotenv
 
-timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+#timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-filename = f"orders/orders_{timestamp}.csv"
+#filename = f"orders/orders_{timestamp}.csv"
+#filename = f"orders_{timestamp}.csv"
 
 load_dotenv()
 
@@ -35,8 +36,12 @@ s3 = boto3.client(
 
 # ---------- S3 UPLOAD FUNCTION ----------
 
-def upload_to_s3():
+def upload_order_to_s3(order_df):
     try:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"orders_{timestamp}.csv"
+
+        order_df.to_csv(filename, index=False)
         s3.upload_file(
             CUSTOMERS_FILE,
             BUCKET_NAME,
@@ -46,8 +51,9 @@ def upload_to_s3():
         s3.upload_file(
             ORDERS_FILE,
             BUCKET_NAME,
-            filename
+            f"orders/{filename}"
         )
+        os.remove(filename)
 
         print("Files uploaded to S3 successfully")
 
@@ -141,7 +147,7 @@ def signup():
         df.to_csv(CUSTOMERS_FILE, index=False)
 
         # upload updated customers.csv to S3
-        upload_to_s3()
+        upload_order_to_s3()
 
         session["user"] = email
         session["customer_id"] = cust_id
@@ -212,7 +218,7 @@ def checkout():
     orders.to_csv(ORDERS_FILE, index=False)
 
     # upload updated CSVs to S3
-    upload_to_s3()
+    upload_order_to_s3(new_order)
 
     cart.clear()
 
